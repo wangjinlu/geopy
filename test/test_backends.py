@@ -74,6 +74,44 @@ class BaseLocalTestCase(unittest.TestCase):
         )
 
 
+class UTMLocalTestCase(unittest.TestCase):
+    delta_exact = 0.002
+    delta_inexact = 0.02
+
+    def setUp(self):
+        self.geocoder = UTM()
+
+    def test_known_utm(self):
+        address = '17T 630084 4833438'
+        result = self.geocoder.geocode(address)
+        if result is None:
+            self.fail('No result found')
+        clean_address, latlon = result
+
+        #self.assertTrue(result[0].raw is not None)
+        self.assertAlmostEqual(latlon[0], 43.642567, delta=self.delta_exact)
+        self.assertAlmostEqual(latlon[1], -79.387139, delta=self.delta_exact)
+
+
+class MGRSLocalTestCase(unittest.TestCase):
+    delta_exact = 0.002
+    delta_inexact = 0.02
+
+    def setUp(self):
+        self.geocoder = MGRS()
+
+    def test_known_mgrs(self):
+        address = '4QFJ12345678'
+        result = self.geocoder.geocode(address)
+        if result is None:
+            self.fail('No result found')
+        clean_address, latlon = result
+
+        #self.assertTrue(result[0].raw is not None)
+        self.assertAlmostEqual(latlon[0], 21.30943, delta=self.delta_exact)
+        self.assertAlmostEqual(latlon[1], -157.91687, delta=self.delta_exact)
+
+
 class GoogleV3LocalTestCase(unittest.TestCase): # pylint: disable=R0904,C0111
     def setUp(self):
         self.geocoder = GoogleV3()
