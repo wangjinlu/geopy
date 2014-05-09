@@ -1,7 +1,6 @@
 """
 :class:`.Location` returns geocoder results.
 """
-
 from geopy.point import Point
 from geopy.compat import string_compare
 
@@ -18,8 +17,8 @@ class Location(object): # pylint: disable=R0903,R0921
 
     __slots__ = ("_address", "_point", "_tuple", "_raw")
 
-    def __init__(self, address="", point=None, raw=None):
-        self._address = address
+    def __init__(self, address="", point=None, raw=None, encoding='utf-8'):
+        self._address = address.encode(encoding)
         if point is None:
             self._point = (None, None, None)
         elif isinstance(point, Point):

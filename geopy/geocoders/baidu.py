@@ -48,7 +48,8 @@ class BaiduV2(Geocoder):
         self.scheme = scheme
         self.doc = {}
 
-        self.api = '%s://%s/geocoder/v2/' % (self.scheme, self.domain)
+        self.geocoding_api = '%s://%s/geocoder/v2/' % (self.scheme, self.domain)
+        self.place_api = '%s://%s/place/v2/' % (self.scheme, self.domain)
 
     def geocode(self, address, city=None, timeout=DEFAULT_TIMEOUT):
         """
@@ -67,7 +68,7 @@ class BaiduV2(Geocoder):
         if city:
             params['city'] = city
 
-        url = "?".join((self.api, urlencode(params)))
+        url = "?".join((self.geocoding_api, urlencode(params)))
 
         logger.debug("%s.geocode: %s", self.__class__.__name__, url)
         return self._parse_json(address, 
@@ -103,9 +104,44 @@ class BaiduV2(Geocoder):
         if pois:
             params['pois'] = pois
 
-        url = "?".join((self.api, urlencode(params)))
+        url = "?".join((self.geocoding_api, urlencode(params)))
         logger.debug("%s.reverse: %s", self.__class__.__name__, url)
         return self._parse_reverse_json(self._call_geocoder(url, timeout=timeout), pois)
+
+    def place_search(self, query, field_params, tag=None, scope=2,
+            filter=None, page_size=10, page_num=0, timeout=DEFAULT_TIMEOUT, recursive=False):
+        """
+        Place API 是一套免费使用的API接口，调用次数限制为10万次/天。
+
+        百度地图Place API服务地址：
+        http://api.map.baidu.com/place/v2/search   //v2 place区域检索POI服务
+
+        :param field_params: dict 检索的区域类型，三种检索方法
+            城市内: {'region': '济南'}
+            矩形  : {'bounds': '38.76623,116.43213,39.54321,116.46773'}
+            圆形  : {'location':'38.76623,116.43213',
+                     'radius': 2000}
+
+        http://api.map.baidu.com/place/v2/detail   //v2 POI详情服务
+        http://api.map.baidu.com/place/v2/eventsearch   //v2 团购信息检索服务
+        http://api.map.baidu.com/place/v2/eventdetail  //v2 商家团购信息查询
+        """
+        params = {
+            'query': query,
+            'ak' : self.ak,
+            'output' : self.output,
+            'page_num' : page_num,
+            'scope' : scope
+            }
+        params = dict(params, **field_params)
+        if tag:
+            params['tag'] = tag
+
+        url = "?".join((self.place_api + 'search/', urlencode(params)))
+        logger.debug("%s.reverse: %s", self.__class__.__name__, url)
+        page = self._call_geocoder(url, timeout=timeout)
+        for poi in self.place_parse(query, field_params, page, tag, page_num, recursive):
+            yield poi
 
     def _parse_reverse_json(self, page, pois):
         '''Returns location, pois from json feed.'''
@@ -144,3 +180,16 @@ class BaiduV2(Geocoder):
 
         if result:
             return parse_location(address, result)
+
+    def place_parse(self, query, field_params, page, tag, page_num, recursive):
+        res_json = page
+        if res_json.get('status') == 0 and res_json.get('message') == 'ok':
+            total = int(res_json.get('total'))
+            page_total = total / 20 if total % 20 == 0 else total / 20 + 1
+            for poi in res_json.get("results"):
+                poi['name'].replace(u'囗', u'口')
+                yield poi
+
+            if page_num == 0 and recursive:
+                for i in range(1, page_total):
+                    self.place_search(query, field_params, tag=tag, page_num=i)
