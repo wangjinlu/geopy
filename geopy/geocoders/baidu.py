@@ -20,7 +20,8 @@ from geopy.geocoders.base import Geocoder, DEFAULT_TIMEOUT, DEFAULT_SCHEME
 from geopy.exc import (
     GeocoderQueryError,
     GeocoderQuotaExceeded,
-    ConfigurationError
+    ConfigurationError,
+    GeocoderTimedOut
 )
 from geopy.location import Location
 from geopy.util import logger
@@ -140,7 +141,7 @@ class BaiduV2(Geocoder):
         url = "?".join((self.place_api + 'search/', urlencode(params)))
         logger.debug("%s.reverse: %s", self.__class__.__name__, url)
         page = self._call_geocoder(url, timeout=timeout)
-        for poi in self.place_parse(query, field_params, page, tag, page_num, recursive):
+        for poi in self.place_parse(query, field_params, page, tag, page_size, page_num, recursive):
             yield poi
 
     def _parse_reverse_json(self, page, pois):
@@ -181,15 +182,20 @@ class BaiduV2(Geocoder):
         if result:
             return parse_location(address, result)
 
-    def place_parse(self, query, field_params, page, tag, page_num, recursive):
+    def place_parse(self, query, field_params, page, tag, page_size, page_num, recursive):
         res_json = page
         if res_json.get('status') == 0 and res_json.get('message') == 'ok':
             total = int(res_json.get('total'))
-            page_total = total / 20 if total % 20 == 0 else total / 20 + 1
+            page_total = total / page_size if total % page_size == 0 else total / page_size + 1
             for poi in res_json.get("results"):
                 poi['name'].replace(u'囗', u'口')
                 yield poi
 
             if page_num == 0 and recursive:
                 for i in range(1, page_total):
-                    self.place_search(query, field_params, tag=tag, page_num=i)
+                    while True:
+                        try:
+                            self.place_search(query, field_params, tag=tag, page_num=i)
+                            break
+                        except GeocoderTimedOut:
+                            continue
