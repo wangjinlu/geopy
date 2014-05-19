@@ -146,12 +146,6 @@ class BaiduV2(Geocoder):
 
     def _parse_reverse_json(self, page, pois):
         '''Returns location, pois from json feed.'''
-        if 0 == page.get('status'):
-            result = page.get('result', {})
-        else:
-            logger.debug("Status is %s, error msg is  %s", page.get('status'), page.get('msg',
-                'unknown'))
-            return
 
         def parse_location(result):
             '''Get the location, lat, lng from a single json place.'''
@@ -161,17 +155,16 @@ class BaiduV2(Geocoder):
 
             return Location(address, (latitude, longitude), result)
 
-        if result:
-            location = parse_location(result)
-            return location, result.get('pois')
-
-    def _parse_json(self, address, page):
-        '''Returns location, (latitude, longitude) from json feed.'''
         if 0 == page.get('status'):
             result = page.get('result', {})
+            location = parse_location(result)
+            return location, result.get('pois')
         else:
             logger.debug("Status is %s, error msg is  %s", page.get('status'), page.get('msg',
                 'unknown'))
+
+    def _parse_json(self, address, page):
+        '''Returns location, (latitude, longitude) from json feed.'''
 
         def parse_location(address, result):
             '''Get the location, lat, lng from a single json place.'''
@@ -179,8 +172,13 @@ class BaiduV2(Geocoder):
             longitude = result.get('location', {}).get('lng')
             return Location(address, (latitude, longitude), result)
 
-        if result:
+        if 0 == page.get('status'):
+            result = page.get('result', {})
             return parse_location(address, result)
+        else:
+            result = None
+            logger.debug("Status is %s, error msg is  %s", page.get('status'), page.get('msg',
+                'unknown'))
 
     def place_parse(self, query, field_params, page, tag, page_size, page_num, recursive):
         res_json = page
