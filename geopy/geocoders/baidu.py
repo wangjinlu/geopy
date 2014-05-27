@@ -1,3 +1,4 @@
+# encoding:utf-8
 """
 :class:`.BaiduV2` is the Baidu Map API.
 
