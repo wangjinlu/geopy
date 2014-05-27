@@ -16,7 +16,7 @@ import base64
 import hashlib
 import hmac
 from geopy.compat import urlencode
-from geopy.geocoders.base import Geocoder, DEFAULT_TIMEOUT, DEFAULT_SCHEME
+from geopy.geocoders.base import Geocoder, 10, DEFAULT_SCHEME
 from geopy.exc import (
     GeocoderQueryError,
     GeocoderQuotaExceeded,
@@ -34,7 +34,7 @@ class BaiduV2(Geocoder):
     """
 
     def __init__(self, ak=None, domain='api.map.baidu.com', scheme='http',
-                 sn=None, callback=None, timeout=DEFAULT_TIMEOUT,
+                 sn=None, callback=None, timeout=10,
                  proxies=None, output='json'):
         """
         Initialize a customized Baidu geocoder.
@@ -52,7 +52,7 @@ class BaiduV2(Geocoder):
         self.geocoding_api = '%s://%s/geocoder/v2/' % (self.scheme, self.domain)
         self.place_api = '%s://%s/place/v2/' % (self.scheme, self.domain)
 
-    def geocode(self, address, city=None, timeout=DEFAULT_TIMEOUT):
+    def geocode(self, address, city=None, timeout=10):
         """
         Geocode a location query.
 
@@ -110,7 +110,7 @@ class BaiduV2(Geocoder):
         return self._parse_reverse_json(self._call_geocoder(url, timeout=timeout), pois)
 
     def place_search(self, query, field_params, tag=None, scope=2,
-            filter=None, page_size=10, page_num=0, timeout=DEFAULT_TIMEOUT, recursive=False):
+            filter=None, page_size=10, page_num=0, timeout=10, recursive=False):
         """
         Place API 是一套免费使用的API接口，调用次数限制为10万次/天。
 
