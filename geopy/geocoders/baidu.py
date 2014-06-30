@@ -17,7 +17,7 @@ import base64
 import hashlib
 import hmac
 from geopy.compat import urlencode
-from geopy.geocoders.base import Geocoder, 10, DEFAULT_SCHEME
+from geopy.geocoders.base import Geocoder, DEFAULT_SCHEME
 from geopy.exc import (
     GeocoderQueryError,
     GeocoderQuotaExceeded,
