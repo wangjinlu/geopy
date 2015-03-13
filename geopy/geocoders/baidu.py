@@ -139,7 +139,7 @@ class BaiduV2(Geocoder):
         if tag:
             params['tag'] = tag
 
-        url = "?".join((self.place_api + 'search/', urlencode(params)))
+        url = "?".join((self.place_api + 'search', urlencode(params)))
         logger.debug("%s.reverse: %s", self.__class__.__name__, url)
         page = self._call_geocoder(url, timeout=timeout)
         for poi in self.place_parse(query, field_params, page, tag, page_size, page_num, recursive):
