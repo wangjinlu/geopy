@@ -158,8 +158,9 @@ class BaiduV2(Geocoder):
 
         if 0 == page.get('status'):
             result = page.get('result', {})
+            cityCode = result.get('cityCode')
             location = parse_location(result)
-            return location, result.get('pois')
+            return location, result.get('pois'), cityCode
         else:
             logger.debug("Status is %s, error msg is  %s", page.get('status'), page.get('msg',
                 'unknown'))
